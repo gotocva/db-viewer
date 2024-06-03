@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="Effortlessly explore and manage your SQLite databases. Our SQLite file explorer offers a user-friendly interface to browse tables, view data, and execute queries.">
+    
+    <meta name="keywords" content="sqlite, sqlite explorer, sqlite database browser, sqlite file viewer, sqlite manager, database tool, database viewer, database management">
+    <meta name="author" content="Sivabharathy">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse & Edit SQLite Files | The Powerful File Explorer Tool</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/select2.min.css" rel="stylesheet">
+    <link href="css/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+
+    <link rel="icon" type="image/x-icon" href="https://www.sivabharathy.in/assets/favicons/favicon.ico">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="https://www.sivabharathy.in/assets/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://www.sivabharathy.in/assets/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://www.sivabharathy.in/assets/favicons/favicon-16x16.png">
+    <link rel="manifest" href="https://www.sivabharathy.in/assets/favicons/site.webmanifest">
+    <link rel="mask-icon" href="https://www.sivabharathy.in/assets/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+
+    <meta property="og:url" content="https://www.sivabharathy.in/db-viewer/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SQLite DB file explorer">
+    <meta property="og:description" content="Effortlessly explore and manage your SQLite databases. Our SQLite file explorer offers a user-friendly interface to browse tables, view data, and execute queries.">
+    
+
+</head>
+<body>
+
+<div id="main-container" class="container shadow bg-white">
+    <header id="header" class="row align-items-center p-4">
+        <div class="col" style="cursor: pointer;" onclick="loadHome()">
+            <h4 class="mb-0">DB File viewer</h4>
+            <p class="mb-0">Read DB file data easily </p>
+        </div>
+    </header>
+
+    <div id="compat-error" class="alert alert-danger row rounded-0 d-none" role="alert">
+        Sorry but your browser does not support some of new HTML5 features! Try using latest version of Google Chrome or Firefox.
+    </div>
+
+    <div class="form-group" id="urlForm">
+        <input type="text" class="form-control mb-2 mt-2" id="urlInput" placeholder="Enter file url">
+        <button type="submit" onclick="loadUrl()" class="btn btn-primary mb-2">Load File</button>
+    </div> 
+
+    <div class="row text-center p-3 align-items-stretch" id="dropzone" onclick="dropzoneClick(this)">
+        <div class="d-flex border border-info-subtle rounded-1 align-items-center justify-content-center">
+            <div id="drop-text">
+                <b>Drop file here</b> to load content or click on this box to open file dialog.<br/>
+            </div>
+            <div id="drop-loading" class="d-flex align-items-center d-none">
+                <div class="spinner-border me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <b>Processing file...</b>
+            </div>
+        </div>
+    </div>
+
+    <div id="output-box" class="container-fluid">
+        <div class="input-group">
+            <select id="tables" class="form-select" title="Table"></select>
+
+            <div class="dropdown ms-2">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenu1"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Export
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                    <li><a class="dropdown-item" href="#" onclick="exportAllToCsv()">All tables to CSV</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportSelectedTableToCsv()">Selected table to CSV</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportQueryTableToCsv()">Query table to CSV</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="d-flex mt-3 mb-3">
+            <div id="sql-editor" class="form-control form-control-lg col me-2"></div>
+            <button class="btn btn-primary col-auto" id="sql-run" type="submit" onclick="executeSql(this)">Execute</button>
+        </div>
+
+        <div class="alert alert-danger" id="error" style="display: none"></div>
+        <div class="alert alert-info" id="info" style="display: none"></div>
+
+        <div class="row pb-4">
+            <div class="overflow-x-auto">
+                <table id="data" class="table table-sm table-bordered table-hover table-striped">
+                    <thead>
+                    <tr></tr>
+                    </thead>
+                    <tbody class="table-group-divider"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="bottom-bar" class="d-flex position-sticky justify-content-center bottom-0 pb-4 d-none pe-none">
+    <div class="row bg-white border border-dark shadow p-3 rounded-2 pe-auto">
+        <button class="btn btn-outline-secondary btn-sm lh-1 col-auto" id="page-prev" type="submit" onclick="setPage(this, false)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left-fill" viewBox="0 0 16 16">
+                <path d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+            </svg>
+        </button>
+        <a href="javascript:void(0)" data-bs-toggle="tooltip" class="text-decoration-none col-auto" onclick="setPage(this)" id="pager"></a>
+        <button class="btn btn-outline-secondary btn-sm lh-1 col-auto" id="page-next" type="submit" onclick="setPage(this, true)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+
+
+<input type="file" id="dropzone-dialog" style="opacity: 0;display:none">
+
+<script src="js/jquery-3.7.1.min.js"></script>
+<script src="js/filereader.js"></script>
+<script src="js/sql-wasm.js?v=1100"></script>
+<script src="js/select2.min.js?v=4013"></script>
+<script src="js/ace/ace.js?v=1323"></script>
+<script src="js/bootstrap.bundle.min.js?v=532"></script>
+<script src="js/mindmup-editabletable.js"></script>
+<script src="js/jszip.min.js"></script>
+<script src="js/FileSaver.min.js"></script>
+<script src="js/main.js?v=18"></script>
+
+</body>
+</html>
